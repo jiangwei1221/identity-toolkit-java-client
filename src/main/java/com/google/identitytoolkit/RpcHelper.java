@@ -58,12 +58,19 @@ public class RpcHelper {
   private static final Logger log = Logger.getLogger(RpcHelper.class.getName());
   private final RsaSHA256Signer signer;
   private final String gitkitApiUrl;
+  private final String certUrl;
   private final HttpSender httpSender;
 
   public RpcHelper(HttpSender httpSender, String gitkitApiUrl, String serviceAccountEmail,
       InputStream keyStream) {
+    this(httpSender, gitkitApiUrl, null, serviceAccountEmail, keyStream);
+  }
+
+  public RpcHelper(HttpSender httpSender, String gitkitApiUrl, String certUrl, String serviceAccountEmail,
+      InputStream keyStream) {
     this.gitkitApiUrl = gitkitApiUrl;
     this.httpSender = httpSender;
+    this.certUrl = certUrl;
     signer = initRsaSHA256Signer(serviceAccountEmail, keyStream);
   }
 
@@ -207,7 +214,7 @@ public class RpcHelper {
   }
 
   String downloadCerts(String serverApiKey) throws IOException {
-    String certUrl = gitkitApiUrl + "publicKeys";
+    String certUrl = this.certUrl != null ? this.certUrl : gitkitApiUrl + "publicKeys";
     Map<String, String> headers = Maps.newHashMap();
     if (serverApiKey != null) {
       certUrl += "?key=" + serverApiKey;

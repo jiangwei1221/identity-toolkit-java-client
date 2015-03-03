@@ -82,7 +82,41 @@ public class GitkitClient {
       String cookieName,
       HttpSender httpSender,
       String serverApiKey) {
-    rpcHelper = new RpcHelper(httpSender, GITKIT_API_BASE, serviceAccountEmail, keyStream);
+    this(
+        clientId,
+        serviceAccountEmail,
+        keyStream,
+        widgetUrl,
+        cookieName,
+        httpSender,
+        serverApiKey,
+        null);
+  }
+
+  /**
+   * Constructs a Gitkit client.
+   *
+   * @param clientId Google oauth2 web application client id. Audience in Gitkit token must match
+   *                 this client id.
+   * @param serviceAccountEmail Google service account email.
+   * @param keyStream Google service account private p12 key stream.
+   * @param widgetUrl Url of the Gitkit widget, must starting with /.
+   * @param cookieName Gitkit cookie name. Used to extract Gitkit token from incoming http request.
+   * @param httpSender Concrete http sender when Gitkit client needs to call Gitkit remote API.
+   * @param serverApiKey Server side API key in Google Developer Console.
+   * @param certUrl The URL of the certificates to sign the token. If it is null, the default URL
+   *                derived from GITKIT_API_BASE will be used.
+   */
+  public GitkitClient(
+      String clientId,
+      String serviceAccountEmail,
+      InputStream keyStream,
+      String widgetUrl,
+      String cookieName,
+      HttpSender httpSender,
+      String serverApiKey,
+      String certUrl) {
+    rpcHelper = new RpcHelper(httpSender, GITKIT_API_BASE, certUrl, serviceAccountEmail, keyStream);
     tokenHelper = new JsonTokenHelper(clientId, rpcHelper, serverApiKey);
     this.widgetUrl = widgetUrl;
     this.cookieName = cookieName;
@@ -108,6 +142,7 @@ public class GitkitClient {
          .setWidgetUrl(configData.getString("widgetUrl"))
          .setCookieName(configData.getString("cookieName"))
          .setServerApiKey(configData.optString("serverApiKey", null))
+         .setCertUrl(configData.optString("certUrl", null))
          .build();
   }
 
@@ -514,6 +549,7 @@ public class GitkitClient {
     private InputStream keyStream;
     private String serverApiKey;
     private String cookieName = "gtoken";
+    private String certUrl;
 
     public Builder setGoogleClientId(String clientId) {
       this.clientId = clientId;
@@ -550,9 +586,14 @@ public class GitkitClient {
       return this;
     }
 
+    public Builder setCertUrl(String certUrl) {
+      this.certUrl = certUrl;
+      return this;
+    }
+
     public GitkitClient build() {
       return new GitkitClient(clientId, serviceAccountEmail, keyStream, widgetUrl, cookieName,
-          httpSender, serverApiKey);
+          httpSender, serverApiKey, certUrl);
     }
   }
 
